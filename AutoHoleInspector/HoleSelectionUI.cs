@@ -36,9 +36,14 @@
 //------------------------------------------------------------------------------
 using NXOpen;
 using NXOpen.BlockStyler;
+using NXOpen.Features;
 using NXOpen.UF;
-using NXOpen.VectorArithmetic;
 using System;
+using System.Diagnostics;
+using System.IO;
+using ProgressBar;
+using Excel = Microsoft.Office.Interop.Excel;
+
 
 
 //------------------------------------------------------------------------------
@@ -54,10 +59,16 @@ public class HoleSelectionUI
     private NXOpen.BlockStyler.Group group0;
     private NXOpen.BlockStyler.SelectObject holeOneID;
     private NXOpen.BlockStyler.SelectObject holeTwoID;
+    private NXOpen.BlockStyler.SpecifyCSYS csysID;
+    private NXOpen.BlockStyler.Group group;// Block type: Group
+    private NXOpen.BlockStyler.FolderSelection folderSelectionID;// Block type: NativeFolderBrowser
+    private NXOpen.BlockStyler.Button executeID;
+    private bool executePressed = false;
+
     private static UFSession theUfSession = UFSession.GetUFSession();
 
-    // Block type: Selection
-    private NXOpen.BlockStyler.SpecifyCSYS csysID;// Block type: Specify Csys
+
+
     //------------------------------------------------------------------------------
     //Bit Option for Property: SnapPointTypesEnabled
     //------------------------------------------------------------------------------
@@ -108,7 +119,7 @@ public class HoleSelectionUI
             theDlxFileName = "HoleSelectionUI.dlx";
             theDialog = theUI.CreateDialog(System.IO.Path.Combine(AppContext.BaseDirectory, theDlxFileName));
             theDialog.AddApplyHandler(new NXOpen.BlockStyler.BlockDialog.Apply(apply_cb));
-            theDialog.AddOkHandler(new NXOpen.BlockStyler.BlockDialog.Ok(ok_cb));
+            //theDialog.AddOkHandler(new NXOpen.BlockStyler.BlockDialog.Ok(ok_cb));
             theDialog.AddUpdateHandler(new NXOpen.BlockStyler.BlockDialog.Update(update_cb));
             theDialog.AddInitializeHandler(new NXOpen.BlockStyler.BlockDialog.Initialize(initialize_cb));
             theDialog.AddDialogShownHandler(new NXOpen.BlockStyler.BlockDialog.DialogShown(dialogShown_cb));
@@ -128,7 +139,7 @@ public class HoleSelectionUI
     //        1.) From where NX session is launched
     //        2.) $UGII_USER_DIR/application
     //        3.) For released applications, using UGII_CUSTOM_DIRECTORY_FILE is highly
-    //            recommended. This variable is set to a full directory path to a file 
+    //            recommended. This variable is set to a full directory path to a file
     //            containing a list of root directories for all custom applications.
     //            e.g., UGII_CUSTOM_DIRECTORY_FILE=$UGII_BASE_DIR\ugii\menus\custom_dirs.dat
     //
@@ -146,25 +157,41 @@ public class HoleSelectionUI
     //------------------------------------------------------------------------------
     public static void Main()
     {
-        HoleSelectionUI theHoleSelectionUI = null;
+        //PartSelection partDlg = null;
+        HoleSelectionUI holeDlg = null;
+
         try
         {
-            theHoleSelectionUI = new HoleSelectionUI();
-            // The following method shows the dialog immediately
-            theHoleSelectionUI.Launch();
+            //partDlg = new PartSelection();
+            //NXOpen.BlockStyler.BlockDialog.DialogResponse resp =
+            //    partDlg.Launch();
+
+            //partDlg.Dispose();
+            //partDlg = null;
+
+
+            //if (resp != NXOpen.BlockStyler.BlockDialog.DialogResponse.Ok)
+            //    return;
+
+
+            holeDlg = new HoleSelectionUI();
+            holeDlg.Launch();
         }
         catch (Exception ex)
         {
-            //---- Enter your exception handling code here -----
-            theUI.NXMessageBox.Show("Block Styler", NXMessageBox.DialogType.Error, ex.ToString());
+            UI.GetUI().NXMessageBox.Show(
+                "Launcher Error",
+                NXMessageBox.DialogType.Error,
+                ex.ToString()
+            );
         }
         finally
         {
-            if (theHoleSelectionUI != null)
-                theHoleSelectionUI.Dispose();
-            theHoleSelectionUI = null;
+            if (holeDlg != null)
+                holeDlg.Dispose();
         }
     }
+
     //------------------------------------------------------------------------------
     // This method specifies how a shared image is unloaded from memory
     // within NX. This method gives you the capability to unload an
@@ -251,12 +278,12 @@ public class HoleSelectionUI
             group0 = (NXOpen.BlockStyler.Group)theDialog.TopBlock.FindBlock("group0");
             holeOneID = (NXOpen.BlockStyler.SelectObject)theDialog.TopBlock.FindBlock("holeOneID");
             holeTwoID = (NXOpen.BlockStyler.SelectObject)theDialog.TopBlock.FindBlock("holeTwoID");
-
             csysID = (SpecifyCSYS)theDialog.TopBlock.FindBlock("csysID");
+            group = (NXOpen.BlockStyler.Group)theDialog.TopBlock.FindBlock("group");
+            folderSelectionID = (NXOpen.BlockStyler.FolderSelection)theDialog.TopBlock.FindBlock("folderSelectionID");
+            executeID = (NXOpen.BlockStyler.Button)theDialog.TopBlock.FindBlock("executeID");
 
-            // ===============================
             // FILTER FOR DATUM HOLE 1
-            // ===============================
             holeOneID.ClearFilter();
 
             NXOpen.Selection.MaskTriple circularEdgeMask =
@@ -273,9 +300,8 @@ public class HoleSelectionUI
 
             holeOneID.MaximumScopeAsString = "Entire Assembly";
 
-            // ===============================
+
             // FILTER FOR DATUM HOLE 2
-            // ===============================
             holeTwoID.ClearFilter();
 
             holeTwoID.SetSelectionFilter(
@@ -298,8 +324,8 @@ public class HoleSelectionUI
 
     //------------------------------------------------------------------------------
     //Callback Name: dialogShown_cb
-    //This callback is executed just before the dialog launch. Thus any value set 
-    //here will take precedence and dialog will be launched showing that value. 
+    //This callback is executed just before the dialog launch. Thus any value set
+    //here will take precedence and dialog will be launched showing that value.
     //------------------------------------------------------------------------------
     public void dialogShown_cb()
     {
@@ -352,6 +378,29 @@ public class HoleSelectionUI
             {
                 //---------Enter your code here-----------
             }
+            else if (block == folderSelectionID)
+            {
+                //---------Enter your code here-----------
+            }
+            else if (block == executeID)
+            {
+                if (string.IsNullOrEmpty(folderSelectionID.Path))
+                {
+                    theUI.NXMessageBox.Show(
+                        "Error",
+                        NXMessageBox.DialogType.Error,
+                        "Please select report location."
+                    );
+                    return 0;
+                }
+
+
+               executePressed = true;
+               ExecuteMeasurementLogic();
+                return 0;
+            }
+
+
         }
         catch (Exception ex)
         {
@@ -364,57 +413,461 @@ public class HoleSelectionUI
     //------------------------------------------------------------------------------
     //Callback Name: ok_cb
     //------------------------------------------------------------------------------
-    public int ok_cb()
-    {
-        try
+    //public int ok_cb()
+    //{
+    //    try
+    //    {
+    //        Edge hole1 = GetSelectedHoleEdge(holeOneID, "Datum Hole 1");
+    //        Edge hole2 = GetSelectedHoleEdge(holeTwoID, "Datum Hole 2");
+
+    //        double dia1 = GetDiameterFromCircularEdge(hole1);
+    //        double dia2 = GetDiameterFromCircularEdge(hole2);
+
+    //        CartesianCoordinateSystem carCsys = GetUserDefinedCsys();
+
+    //        Point3d c1 = GetHoleCenterFromEdge(hole1);
+    //        Point3d c2 = GetHoleCenterFromEdge(hole2);
+
+    //        Vector3d pDir = new Vector3d(0.0, 1.0, 0.0);
+    //        double pitch = GetPitchAlongAxis(c1, c2, pDir);
+
+    //        DatumCsys h1Csys = CreateHoleDatumCsys(c1);
+    //        DatumCsys h2Csys = CreateHoleDatumCsys(c2);
+
+    //        double ref_h1 = ToNxAlternatePlaneAngle(
+    //            AngleBetweenYZPlanes(carCsys, h1Csys.GetEntities()[0] as CartesianCoordinateSystem));
+
+    //        double ref_h2 = ToNxAlternatePlaneAngle(
+    //            AngleBetweenYZPlanes(carCsys, h2Csys.GetEntities()[0] as CartesianCoordinateSystem));
+
+    //        double h1_h2 = AngleBetweenYZPlanes(
+    //            h1Csys.GetEntities()[0] as CartesianCoordinateSystem,
+    //            h2Csys.GetEntities()[0] as CartesianCoordinateSystem);
+
+    //        if (executePressed)
+    //        {
+    //            string csvPath = Path.Combine(folderSelectionID.Path, "AutoHoleInspector_Report.csv");
+
+    //            //START PROGRESS BAR 
+    //            ProgressController.StartProgressBar(
+    //                stepSize: 10,
+    //                interval: 0.15,
+    //                timerStatus: true,
+    //                progressLabel: "Creating Excel Report..."
+    //            );
+
+    //            for (int i = 0; i < 5; i++)
+    //            {
+    //                ProgressController.IncrementProgressBar();
+    //                System.Threading.Thread.Sleep(150);
+    //            }
+
+    //            int partSerial = GetNextPartSerial(csvPath);
+
+    //            CreateCsvReport(
+    //                partSerial,
+    //                dia1, dia2,
+    //                ref_h1, ref_h2,
+    //                h1_h2,
+    //                pitch,
+    //                c1, c2,
+    //                csvPath
+    //            );
+
+    //            for (int i = 0; i < 5; i++)
+    //            {
+    //                ProgressController.IncrementProgressBar();
+    //                System.Threading.Thread.Sleep(150);
+    //            }
+
+    //            ProgressController.StopProgressBar();
+
+    //            //SUCCESS MESSAGE 
+    //            theUI.NXMessageBox.Show(
+    //                "Success",
+    //                NXMessageBox.DialogType.Information,
+    //                "Modeling Check List Created Successfully"
+    //            );
+
+    //            //OPEN EXCEL AFTER OK
+    //            if (File.Exists(csvPath))
+    //            {
+    //                Process.Start(new ProcessStartInfo
+    //                {
+    //                    FileName = csvPath,
+    //                    UseShellExecute = true
+    //                });
+    //            }
+    //        }
+
+    //        return 0;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        theUI.NXMessageBox.Show(
+    //            "Hole Selection Error",
+    //            NXMessageBox.DialogType.Error,
+    //            ex.Message
+    //        );
+    //        return 1;
+    //    }
+    //}
+
+private void ExecuteMeasurementLogic()
+ {
+        Edge hole1 = GetSelectedHoleEdge(holeOneID, "Datum Hole 1");
+        Edge hole2 = GetSelectedHoleEdge(holeTwoID, "Datum Hole 2");
+
+        double dia1 = GetDiameterFromCircularEdge(hole1);
+        double dia2 = GetDiameterFromCircularEdge(hole2);
+
+        CartesianCoordinateSystem carCsys = GetUserDefinedCsys();
+
+        Point3d c1 = GetHoleCenterFromEdge(hole1);
+        Point3d c2 = GetHoleCenterFromEdge(hole2);
+
+        Vector3d pDir = new Vector3d(0.0, 1.0, 0.0);
+        double pitch = GetPitchAlongAxis(c1, c2, pDir);
+
+        DatumCsys h1Csys = CreateHoleDatumCsys(c1);
+        DatumCsys h2Csys = CreateHoleDatumCsys(c2);
+
+        double ref_h1 = ToNxAlternatePlaneAngle(
+            AngleBetweenYZPlanes(carCsys, h1Csys.GetEntities()[0] as CartesianCoordinateSystem));
+
+        double ref_h2 = ToNxAlternatePlaneAngle(
+            AngleBetweenYZPlanes(carCsys, h2Csys.GetEntities()[0] as CartesianCoordinateSystem));
+
+        double h1_h2 = AngleBetweenYZPlanes(
+            h1Csys.GetEntities()[0] as CartesianCoordinateSystem,
+            h2Csys.GetEntities()[0] as CartesianCoordinateSystem);
+
+        string folderPath = folderSelectionID.Path;
+        if (executePressed)
         {
-            Edge hole1 = GetSelectedHoleEdge(holeOneID, "Datum Hole 1");
-            Edge hole2 = GetSelectedHoleEdge(holeTwoID, "Datum Hole 2");
 
-            //--slection of csys
-            //PropertyList csysProps = csysID.GetProperties();
-            //TaggedObject csysObj = csysProps.GetTaggedObject("SelectedCsys");
+            ProgressController.StartProgressBar(
+                stepSize: 10,
+                interval: 0.15,
+                timerStatus: true,
+                progressLabel: "Creating Excel Report..."
+            );
+        }
+        // System.Threading.Thread.Sleep(150);
+        for (int i = 0; i < 5; i++)
+        {
+            ProgressController.IncrementProgressBar();
+            System.Threading.Thread.Sleep(150);
+        }
 
-            //CoordinateSystem carLineCsys = csysObj as CoordinateSystem;
+        //int partSerial = GetNextPartSerial(csvPath);
 
-            //if (carLineCsys == null)
-            //    throw new Exception("Please select a valid Datum CSYS.");
+       string excelPath= CreateExcelReport(
+                dia1, dia2,
+                ref_h1, ref_h2,
+                h1_h2,
+                pitch,
+                c1, c2,
+                folderPath
+            );
 
+        for (int i = 0; i < 5; i++)
+        {
+            ProgressController.IncrementProgressBar();
+            System.Threading.Thread.Sleep(150);
+        }
 
-            double dia1 = GetDiameterFromCircularEdge(hole1);
-            double dia2 = GetDiameterFromCircularEdge(hole2);
-            double pitch = GetPitchBetweenHoles(hole1, hole2);
-            //Vector3d xyz1 = GetXYZWrtCsys(hole1, carLineCsys);
-            //Vector3d xyz2 = GetXYZWrtCsys(hole2, carLineCsys);
+        ProgressController.StopProgressBar();
 
-
-
-
+            //SUCCESS MESSAGE 
             theUI.NXMessageBox.Show(
-                "Hole Diameters",
+                "Success",
                 NXMessageBox.DialogType.Information,
-                $"Datum Hole 1 Diameter = {dia1:F3} mm\n" +
-                $"Datum Hole 2 Diameter = {dia2:F3} mm\n" +
-                $"Pitch Distance = {pitch:F3} mm\n\n"
-            //$"Hole 2 XYZ (Car Line) = X:{xyz2.X:F3}, Y:{xyz2.Y:F3}, Z:{xyz2.Z:F3}\n\n" +
-            //$"Hole 1 XYZ (Car Line) = X:{xyz1.X:F3}, Y:{xyz1.Y:F3}, Z:{xyz1.Z:F3}\n"
+                "Modeling Check List Created Successfully"
             );
-            return 0;
+
+            //OPEN EXCEL AFTER OK
+            if (File.Exists(excelPath))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = excelPath,
+                    UseShellExecute = true
+                });
+            }
         }
-        catch (Exception ex)
-        {
-            theUI.NXMessageBox.Show(
-                "Hole Selection Error",
-                NXMessageBox.DialogType.Error,
-                ex.Message
-            );
-            return 1;
-        }
+
+private double CleanZero(double value, double tol = 1e-5)
+  {
+        return Math.Abs(value) < tol ? 0.0 : value;
+  }
+
+private string  CreateExcelReport(
+        double dia1, double dia2,
+        double carAngle1, double carAngle2,
+        double mutualAngle,
+        double pitch,
+        Point3d c1, Point3d c2,
+        string folderPath)
+{
+    Excel.Application excel = new Excel.Application();
+    excel.Visible = false;
+
+    Excel.Workbook wb = excel.Workbooks.Add();
+    Excel.Worksheet ws = wb.ActiveSheet;
+    ws.Name = "Inspection Report";
+
+    //HEADER
+    ws.Cells[1, 1] = "Sr.NO";
+    ws.Cells[1, 2] = "PART NUMBER";
+    ws.Cells[1, 3] = "REVISION\nNO";
+    ws.Cells[1, 4] = "PICTORIAL\nVIEW";
+    ws.Cells[1, 5] = "HOLE";
+    ws.Cells[1, 6] = "DIA";
+    ws.Cells[1, 7] = "ANGLE WITH\nCAR LINE";
+    ws.Cells[1, 8] = "ANGLE WITH\nEACH OTHER";
+    ws.Cells[1, 9] = "PITCH";
+    ws.Cells[1, 10] = "X";
+    ws.Cells[1, 11] = "Y";
+    ws.Cells[1, 12] = "Z";
+    ws.Cells[1, 13] = "DATUM STATUS";
+
+    Excel.Range header = ws.Range["A1:M1"];
+    header.Font.Bold = true;
+    header.WrapText = true;
+    header.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+    header.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+    header.Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+    ws.Rows[1].RowHeight = 35;
+
+
+    int row = 2;
+    int srNo = 1;
+
+         ws.Cells[row, 5] = "D1";
+         ws.Cells[row, 6] = dia1;
+         ws.Cells[row, 7] = carAngle1;
+         ws.Cells[row, 8] = mutualAngle;
+         ws.Cells[row, 9] = pitch;
+         ws.Cells[row, 10] = c1.X;
+         ws.Cells[row, 11] = c1.Y;
+         ws.Cells[row, 12] = c1.Z;
+
+
+       
+
+        ws.Cells[row + 1, 5] = "D2";
+        ws.Cells[row + 1, 6] = dia2;
+        ws.Cells[row + 1, 7] = carAngle2;
+        ws.Cells[row + 1, 10] = CleanZero(c2.X); 
+        ws.Cells[row + 1, 11] = CleanZero(c2.Y); 
+        ws.Cells[row + 1, 12] = CleanZero(c2.Z);
+
+        Excel.Range srRange = ws.Range[$"A{row}:A{row + 1}"];
+        srRange.Merge();
+        srRange.Value = srNo;
+        srRange.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        srRange.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+
+        Excel.Range partRange = ws.Range[$"B{row}:B{row + 1}"];
+        partRange.Merge();
+        partRange.Value = "";   // fill later if needed
+        partRange.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        partRange.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+
+        Excel.Range revRange = ws.Range[$"C{row}:C{row + 1}"];
+        revRange.Merge();
+        revRange.Value = "";
+        revRange.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        revRange.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+
+        Excel.Range picRange = ws.Range[$"D{row}:D{row + 1}"];
+        picRange.Merge();
+        picRange.Value = "";   // later you can insert image here
+        picRange.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        picRange.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+
+        Excel.Range angleRange = ws.Range[$"H{row}:H{row + 1}"];
+        angleRange.Merge();
+        angleRange.Value = mutualAngle;
+        angleRange.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        angleRange.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+
+        
+        Excel.Range pitchRange = ws.Range[$"I{row}:I{row + 1}"];
+        pitchRange.Merge();
+        pitchRange.Value = pitch;
+        pitchRange.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        pitchRange.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+
+
+        Excel.Range statusRange = ws.Range[$"M{row}:M{row + 1}"];
+        statusRange.Merge();
+        statusRange.Value = "";   // later you can write datum status
+        statusRange.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        statusRange.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+        statusRange.WrapText = true;
+
+
+        ws.Range[$"A{row}:M{row + 1}"].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+
+        ws.Columns.AutoFit();
+
+        string path = Path.Combine(folderPath, "HoleInspection.xlsx");
+
+
+        excel.DisplayAlerts = false;
+        wb.SaveAs(path);
+        excel.DisplayAlerts = true;
+
+        wb.Close();
+        excel.Quit();
+
+        return path;
+}
+private double ToNxAlternatePlaneAngle(double angle360)
+    {
+        // Normalize
+        angle360 = angle360 % 360.0;
+        if (angle360 < 0)
+            angle360 += 360.0;
+
+        // Convert to 0–180
+        if (angle360 > 180.0)
+            angle360 = 360.0 - angle360;
+
+        // Prefer obtuse angle 
+        if (angle360 < 90.0)
+            angle360 = 180.0 - angle360;
+
+        return angle360;
     }
 
-    private Edge GetSelectedHoleEdge(NXOpen.BlockStyler.SelectObject holeBlock, string holeName)
+private Vector3d GetYZPlaneNormal(CartesianCoordinateSystem csys)
+ {
+        Matrix3x3 m = csys.Orientation.Element;
 
-    {
+        // X-axis is normal of YZ plane
+        Vector3d xDir = new Vector3d(m.Xx, m.Xy, m.Xz);
+        return Normalize(xDir);
+ }
+
+private double AngleBetweenYZPlanes(
+    CartesianCoordinateSystem refCsys,
+    CartesianCoordinateSystem targetCsys)
+{
+        // X axis = normal of YZ plane
+        Vector3d nRef = GetYZPlaneNormal(refCsys);
+        Vector3d nTar = GetYZPlaneNormal(targetCsys);
+
+
+        double dot =
+            nRef.X * nTar.X +
+            nRef.Y * nTar.Y +
+            nRef.Z * nTar.Z;
+
+        dot = Math.Max(-1.0, Math.Min(1.0, dot));
+
+        double angle = Math.Acos(dot) * 180.0 / Math.PI; // acute
+
+        // Cross direction
+        Vector3d cross = new Vector3d(
+            nRef.Y * nTar.Z - nRef.Z * nTar.Y,
+            nRef.Z * nTar.X - nRef.X * nTar.Z,
+            nRef.X * nTar.Y - nRef.Y * nTar.X
+        );
+
+        // Use reference Z-axis to decide sign
+        Matrix3x3 m = refCsys.Orientation.Element;
+        Vector3d refZ = new Vector3d(m.Zx, m.Zy, m.Zz);
+
+        double sign =
+            cross.X * refZ.X +
+            cross.Y * refZ.Y +
+            cross.Z * refZ.Z;
+
+        if (sign < 0)
+            angle = 360.0 - angle;
+
+        return angle;
+    }
+
+ 
+private DatumCsys CreateHoleDatumCsys(Point3d origin)
+  {
+        Part workPart = theSession.Parts.Work;
+
+        CartesianCoordinateSystem refCsys =
+            workPart.WCS.CoordinateSystem;
+
+        Matrix3x3 m = refCsys.Orientation.Element;
+
+        Vector3d xDir = new Vector3d(m.Xx, m.Xy, m.Xz);
+        Vector3d yDir = new Vector3d(m.Yx, m.Yy, m.Yz);
+
+        Xform xform = workPart.Xforms.CreateXform(
+            origin,
+            xDir,
+            yDir,
+            SmartObject.UpdateOption.WithinModeling,
+            1.0
+        );
+
+        CartesianCoordinateSystem cartCsys =
+            workPart.CoordinateSystems.CreateCoordinateSystem(
+                xform,
+                SmartObject.UpdateOption.WithinModeling
+            );
+
+        DatumCsysBuilder builder =
+            workPart.Features.CreateDatumCsysBuilder(null);
+
+        builder.Csys = cartCsys;
+        builder.DisplayScaleFactor = 1.0;
+
+        DatumCsys datumCsys =
+            (DatumCsys)builder.Commit();
+
+        builder.Destroy();
+        return datumCsys;
+  }
+
+
+
+private CartesianCoordinateSystem GetUserDefinedCsys()
+  {
+        TaggedObject[] selected = csysID.GetSelectedObjects();
+
+        if (selected == null || selected.Length == 0)
+            throw new Exception("Please select or define CAR line CSYS.");
+
+        //User picked a Datum CSYS
+        DatumCsys datum = selected[0] as DatumCsys;
+        if (datum != null)
+        {
+            return datum.GetEntities()[0] as CartesianCoordinateSystem;
+        }
+
+        //User picked an existing CSYS directly
+        CartesianCoordinateSystem csys = selected[0] as CartesianCoordinateSystem;
+        if (csys != null)
+        {
+            return csys;
+        }
+
+        throw new Exception("Selected object is not a valid CSYS.");
+ }
+
+private Vector3d Normalize(Vector3d v)
+  {
+        double mag = Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
+        return new Vector3d(v.X / mag, v.Y / mag, v.Z / mag);
+  }
+
+
+private Edge GetSelectedHoleEdge(NXOpen.BlockStyler.SelectObject holeBlock, string holeName)
+
+  {
         TaggedObject[] selectedObjects = holeBlock.GetSelectedObjects();
 
         if (selectedObjects == null || selectedObjects.Length == 0)
@@ -426,11 +879,11 @@ public class HoleSelectionUI
             throw new Exception($"{holeName} is not a circular edge.");
 
         return edge;
-    }
+  }
 
     //Finding Diameter
-    private double GetDiameterFromCircularEdge(Edge edge)
-    {
+private double GetDiameterFromCircularEdge(Edge edge)
+  {
         Part workPart = theSession.Parts.Work;
 
         Unit mmUnit = workPart.UnitCollection.FindObject("MilliMeter") as Unit;
@@ -461,106 +914,127 @@ public class HoleSelectionUI
         );
 
         return diameter;
-    }
+  }
 
     //Finding Pitch Distance
 
-    private double GetPitchBetweenHoles(Edge hole1, Edge hole2)
-    {
+private double GetPitchAlongAxis(Point3d c1, Point3d c2, Vector3d axis)
+  {
+        double mag = Math.Sqrt(axis.X * axis.X + axis.Y * axis.Y + axis.Z * axis.Z);
+        Vector3d unit = new Vector3d(axis.X / mag, axis.Y / mag, axis.Z / mag);
+
+        Vector3d diff = new Vector3d(
+            c2.X - c1.X,
+            c2.Y - c1.Y,
+            c2.Z - c1.Z
+        );
+
+        return Math.Abs(
+            diff.X * unit.X +
+            diff.Y * unit.Y +
+            diff.Z * unit.Z
+        );
+  }
+
+
+
+private Point3d GetHoleCenterFromEdge(Edge edge)
+  {
         Part workPart = theSession.Parts.Work;
+        Unit mmUnit = workPart.UnitCollection.FindObject("MilliMeter") as Unit;
 
-        Point p1 = workPart.Points.CreatePoint(
-            hole1,
-            SmartObject.UpdateOption.AfterModeling
+        NXObject[] sel = new NXObject[] { edge };
+
+        bool isApproximate;
+        double arcLength;
+        double radius;
+        double diameter;
+        double minRadius;
+        Point3d startPoint;
+        Point3d endPoint;
+        Point3d arcCenter;
+
+        theSession.Measurement.GetArcAndCurveProperties(
+            sel,
+            mmUnit,
+            true,
+            out isApproximate,
+            out arcLength,
+            out radius,
+            out diameter,
+            out minRadius,
+            out startPoint,
+            out endPoint,
+            out arcCenter
         );
-        Point p2 = workPart.Points.CreatePoint(
-            hole2,
-            SmartObject.UpdateOption.AfterModeling
-        );
 
-        p1.RemoveViewDependency();
-        p2.RemoveViewDependency();
+        return arcCenter;
+  }
 
-        Point3d c1 = p1.Coordinates;
-        Point3d c2 = p2.Coordinates;
+    
+    //private int GetNextPartSerial(string csvPath)
+    //{
+    //    if (!File.Exists(csvPath))
+    //        return 1;
 
-        double dx = Math.Abs(c2.X - c1.X);
-        double dy = Math.Abs(c2.Y - c1.Y);
-        double dz = Math.Abs(c2.Z - c1.Z);
-
-        // 🔹 NX-style automatic vector selection
-        double pitch;
-
-        if (dx >= dy && dx >= dz)
-            pitch = dx;      // X-dominant
-        else if (dy >= dx && dy >= dz)
-            pitch = dy;      // Y-dominant 
-        else
-            pitch = dz;      // Z-dominant
-
-        workPart.Points.DeletePoint(p1);
-        workPart.Points.DeletePoint(p2);
-
-        return pitch;
-    }
-
-
-   
-    //x,y,z w.r.t car line
-    // ===============================
-    // X, Y, Z w.r.t. Car Line (CSYS)
-    // ===============================
-    //    private Vector3d GetXYZWrtCsys(Edge holeEdge, CoordinateSystem csys)
+    //    int lastSerial = 0;
+    //    foreach (var line in File.ReadAllLines(csvPath))
     //    {
-    //        Part workPart = theSession.Parts.Work;
-
-    //        // 1. Create hole center point
-    //        Point p = workPart.Points.CreatePoint(
-    //            holeEdge,
-    //            SmartObject.UpdateOption.AfterModeling
-    //        );
-    //        p.RemoveViewDependency();
-
-    //        Point3d holeAbs = p.Coordinates;
-
-    //        // 2. Ask CSYS origin + orientation using UF (CORRECT way)
-    //        double[] csysOrigin = new double[3];
-    //        double[] matrix = new double[9];
-
-    //        theUfSession.Csys.AskCsysInfo(
-    //    csys.Tag,
-    //    out csysOrigin,
-    //    out matrix
-    //);
-
-
-    //        // 3. Vector from CSYS origin → hole
-    //        Vector3d delta = new Vector3d(
-    //            holeAbs.X - csysOrigin[0],
-    //            holeAbs.Y - csysOrigin[1],
-    //            holeAbs.Z - csysOrigin[2]
-    //        );
-
-    //        // 4. Project into CSYS axes
-    //        double x = delta.X * matrix[0] + delta.Y * matrix[1] + delta.Z * matrix[2];
-    //        double y = delta.X * matrix[3] + delta.Y * matrix[4] + delta.Z * matrix[5];
-    //        double z = delta.X * matrix[6] + delta.Y * matrix[7] + delta.Z * matrix[8];
-
-    //        // 5. Cleanup
-    //        workPart.Points.DeletePoint(p);
-
-    //        return new Vector3d(x, y, z);
+    //        var cols = line.Split(',');
+    //        if (cols.Length > 0 && int.TryParse(cols[0], out int s))
+    //            lastSerial = Math.Max(lastSerial, s);
     //    }
+    //    return lastSerial + 1;
+    //}
+
+    //private void CreateCsvReport(
+    // int partSerialNo,
+    // double dia1, double dia2,
+    // double carAngle1, double carAngle2,
+    // double mutualAngle,
+    // double pitch,
+    // Point3d c1, Point3d c2,
+    // string csvPath)
+    //{
+    //    bool fileExists = File.Exists(csvPath);
+
+    //    using (StreamWriter sw = new StreamWriter(csvPath, true))
+    //    {
+    //        //HEADER
+    //        if (!fileExists)
+    //        {
+    //            sw.WriteLine(
+    //                "S.No,PART NUMBER,REVISION NO,PICTORIAL VIEW," +
+    //                "HOLE,DIA,ANGLE WITH CAR LINE,ANGLE WITH EACH OTHER," +
+    //                "PITCH,X,Y,Z,DATUM STATUS"
+    //            );
+    //        }
+
+    //        // D1
+    //        sw.WriteLine(
+    //            $"{partSerialNo},,,," +
+    //            $"D1,{dia1:F3}," +
+    //            $"{carAngle1:F3}," +
+    //            $"{mutualAngle:F3}," +
+    //            $"{pitch:F3}," +
+    //            $"{c1.X:F3},{c1.Y:F3},{c1.Z:F3},"
+    //        );
+
+    //        //  D2
+    //        sw.WriteLine(
+    //            $",,,," +
+    //            $"D2,{dia2:F3}," +
+    //            $"{carAngle2:F3}," +
+    //            $"," +
+    //            $"," +
+    //            $"{c2.X:F3},{c2.Y:F3},{c2.Z:F3},"
+    //        );
+    //    }
+    //}
 
 
 
-
-
-
-
-
-
-     //------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
     //Function Name: GetBlockProperties
     //Returns the propertylist of the specified BlockID
     //------------------------------------------------------------------------------
@@ -578,8 +1052,5 @@ public class HoleSelectionUI
         }
         return plist;
     }
-
-
-
 
 }

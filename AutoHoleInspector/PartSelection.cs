@@ -37,7 +37,7 @@
 using System;
 using NXOpen;
 using NXOpen.BlockStyler;
-using NXOpen.Assemblies;   // 🔥 REQUIRED FOR Component
+using NXOpen.Assemblies;   
 
 
 //------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ public class PartSelection
     private string theDlxFileName;
     private NXOpen.BlockStyler.BlockDialog theDialog;
     private NXOpen.BlockStyler.Group selectPartID;
-    private NXOpen.BlockStyler.SelectObject componentSelectID;// Block type: Selection
+    private NXOpen.BlockStyler.SelectObject componentSelectID;
     //------------------------------------------------------------------------------
     //Bit Option for Property: SnapPointTypesEnabled
     //------------------------------------------------------------------------------
@@ -138,27 +138,29 @@ public class PartSelection
     //        2) Invoke the Shared Library through File->Execute->NX Open menu.
     //
     //------------------------------------------------------------------------------
-    public static void Main()
-    {
-        PartSelection thePartSelection = null;
-        try
-        {
-            thePartSelection = new PartSelection();
-            // The following method shows the dialog immediately
-            thePartSelection.Launch();
-        }
-        catch (Exception ex)
-        {
-            //---- Enter your exception handling code here -----
-            theUI.NXMessageBox.Show("Block Styler", NXMessageBox.DialogType.Error, ex.ToString());
-        }
-        finally
-        {
-            if(thePartSelection != null)
-                thePartSelection.Dispose();
-                thePartSelection = null;
-        }
-    }
+    //public static void Main()
+    //{
+    //    PartSelection thePartSelection = null;
+    //    try
+    //    {
+    //        thePartSelection = new PartSelection();
+    //        // The following method shows the dialog immediately
+    //        thePartSelection.Launch();
+
+            
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        //---- Enter your exception handling code here -----
+    //        theUI.NXMessageBox.Show("Block Styler", NXMessageBox.DialogType.Error, ex.ToString());
+    //    }
+    //    finally
+    //    {
+    //        if(thePartSelection != null)
+    //            thePartSelection.Dispose();
+    //            thePartSelection = null;
+    //    }
+    //}
     //------------------------------------------------------------------------------
     // This method specifies how a shared image is unloaded from memory
     // within NX. This method gives you the capability to unload an
@@ -319,6 +321,7 @@ public class PartSelection
         try
         {
             errorCode = apply_cb();
+
         }
         catch (Exception ex)
         {
@@ -370,7 +373,7 @@ public class PartSelection
         if (compPart == null)
             throw new Exception("Component prototype is not a part.");
 
-        // 🔹 Open in new window and set work
+        
         PartLoadStatus loadStatus;
         theSession.Parts.SetDisplay(
             compPart,

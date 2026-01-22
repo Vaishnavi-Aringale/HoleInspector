@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36705.20 d17.14
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.36631.11
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoHoleInspector", "AutoHoleInspector\AutoHoleInspector.csproj", "{09962698-0DB0-4029-BCA2-7F604E8FFE66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProgressBar", "..\ProgressBar\ProgressBar\ProgressBar.csproj", "{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{09962698-0DB0-4029-BCA2-7F604E8FFE66}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09962698-0DB0-4029-BCA2-7F604E8FFE66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09962698-0DB0-4029-BCA2-7F604E8FFE66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
