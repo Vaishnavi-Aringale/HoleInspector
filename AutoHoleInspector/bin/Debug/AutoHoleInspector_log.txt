@@ -1,0 +1,42 @@
+[2026-01-28 14:32:44] INFO: D:\MSIL\Solution_AutoHoleInspector\AutoHoleInspector\AutoHoleInspector\bin\Debug\AutoHoleInspector Program started.
+[2026-01-28 14:32:44] ERROR: License File does not exist.
+[2026-01-28 14:32:44] DEBUG: Processing the file
+[2026-01-28 14:41:57] INFO: D:\MSIL\Solution_AutoHoleInspector\AutoHoleInspector\AutoHoleInspector\bin\Debug\AutoHoleInspector Program started.
+[2026-01-28 14:41:57] ERROR: License File does not exist.
+[2026-01-28 14:41:57] DEBUG: Processing the file
+[2026-01-28 15:52:34] INFO: D:\MSIL\Solution_AutoHoleInspector\AutoHoleInspector\AutoHoleInspector\bin\Debug\AutoHoleInspector Program started.
+[2026-01-28 15:52:34] ERROR: License File does not exist.
+[2026-01-28 15:52:34] DEBUG: Processing the file
+[2026-01-28 17:18:12] INFO: D:\MSIL\Solution_AutoHoleInspector\AutoHoleInspector\AutoHoleInspector\bin\Debug\AutoHoleInspector Program started.
+[2026-01-28 17:18:12] DEBUG: Processing the file
+[2026-01-28 17:18:12] DEBUG: Processing the file data
+[2026-01-28 17:18:12] DEBUG: Processing the file data components
+[2026-01-28 17:18:12] DEBUG: Trial license
+[2026-01-28 17:18:12] DEBUG: Processing the result 111111 
+[2026-01-28 17:18:12] DEBUG: Checking C
+[2026-01-28 17:18:12] DEBUG: Data located
+[2026-01-28 17:18:12] DEBUG: Updating data
+[2026-01-28 17:18:12] DEBUG: Finalising the process
+[2026-01-28 17:18:12] DEBUG: Processing done
+[2026-01-28 17:19:07] INFO: D:\MSIL\Solution_AutoHoleInspector\AutoHoleInspector\AutoHoleInspector\bin\Debug\AutoHoleInspector Program started.
+[2026-01-28 17:19:07] DEBUG: Processing the file
+[2026-01-28 17:19:07] DEBUG: Processing the file data
+[2026-01-28 17:19:07] DEBUG: Processing the file data components
+[2026-01-28 17:19:07] DEBUG: Trial license
+[2026-01-28 17:19:07] DEBUG: Processing the result 111111 
+[2026-01-28 17:19:07] DEBUG: Checking C
+[2026-01-28 17:19:07] DEBUG: Data located
+[2026-01-28 17:19:07] DEBUG: Updating data
+[2026-01-28 17:19:07] DEBUG: Finalising the process
+[2026-01-28 17:19:07] DEBUG: Processing done
+[2026-01-29 14:48:02] INFO: D:\MSIL\Solution_AutoHoleInspector\AutoHoleInspector\AutoHoleInspector\bin\Debug\AutoHoleInspector Program started.
+[2026-01-29 14:48:02] DEBUG: Processing the file
+[2026-01-29 14:48:02] DEBUG: Processing the file data
+[2026-01-29 14:48:02] DEBUG: Processing the file data components
+[2026-01-29 14:48:02] DEBUG: Trial license
+[2026-01-29 14:48:02] DEBUG: Processing the result 111111 
+[2026-01-29 14:48:02] DEBUG: Checking C
+[2026-01-29 14:48:02] DEBUG: Data located
+[2026-01-29 14:48:02] DEBUG: Updating data
+[2026-01-29 14:48:02] DEBUG: Finalising the process
+[2026-01-29 14:48:02] DEBUG: Processing done

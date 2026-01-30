@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoHoleInspector", "AutoHo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProgressBar", "..\ProgressBar\ProgressBar\ProgressBar.csproj", "{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "AutoHoleInspectorSetup", "AutoHoleInspectorSetup\AutoHoleInspectorSetup.vdproj", "{872C3904-389E-43AA-87A0-CD9E9EC19839}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,8 @@ Global
 		{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D78E6E5B-6278-4240-A2F4-5B247CD6FD83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{872C3904-389E-43AA-87A0-CD9E9EC19839}.Debug|Any CPU.ActiveCfg = Debug
+		{872C3904-389E-43AA-87A0-CD9E9EC19839}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

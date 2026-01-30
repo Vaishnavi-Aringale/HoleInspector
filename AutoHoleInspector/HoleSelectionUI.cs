@@ -43,6 +43,7 @@ using System.Diagnostics;
 using System.IO;
 using ProgressBar;
 using Excel = Microsoft.Office.Interop.Excel;
+using System.Runtime.InteropServices;
 
 
 
@@ -107,6 +108,34 @@ public class HoleSelectionUI
     public static readonly int SnapPointTypesOnByDefault_BoundedGridPoint = (1 << 16);
     public static readonly int SnapPointTypesOnByDefault_FacetVertexPoint = (1 << 17);
 
+
+
+    [DllImport("lk.dll", EntryPoint = "LicValidModules", CallingConvention = CallingConvention.StdCall)]
+    public static extern IntPtr LicValidModules(string filename, string executableName, IntPtr[] moduleNames, int count, out int outCount);
+
+    private static string[] process_module(string[] inputArray, string license_file_name)
+    {
+        IntPtr[] stringPointers = new IntPtr[inputArray.Length];
+        for (int i = 0; i < inputArray.Length; i++)
+        {
+            stringPointers[i] = Marshal.StringToHGlobalAnsi(inputArray[i]);
+        }
+
+        int outCount;
+        IntPtr LicValidModulesPtr = LicValidModules(license_file_name + ".lic", "getcid.exe ", stringPointers, inputArray.Length, out outCount);
+        string LicValidModulesPtrResult = Marshal.PtrToStringAnsi(LicValidModulesPtr);
+
+        string[] resultArray = new string[outCount];
+        IntPtr[] resultStrings = new IntPtr[outCount];
+
+        for (int i = 0; i < outCount; i++)
+        {
+            resultStrings[i] = Marshal.ReadIntPtr(LicValidModulesPtr, i * IntPtr.Size);
+            resultArray[i] = Marshal.PtrToStringAnsi(resultStrings[i]);
+        }
+
+        return resultArray;
+    }
     //------------------------------------------------------------------------------
     //Constructor for NX Styler class
     //------------------------------------------------------------------------------
@@ -155,11 +184,31 @@ public class HoleSelectionUI
     //        2) Invoke the Shared Library through File->Execute->NX Open menu.
     //
     //------------------------------------------------------------------------------
-    public static void Main()
+    public static int Main()
     {
         //PartSelection partDlg = null;
-        HoleSelectionUI holeDlg = null;
+        //HoleSelectionUI holeDlg = null;
 
+        int retValue = 1;
+        string moduleName = "AutoHoleInspector";
+        string[] inputArray = new[] { "AutoHoleInspector", "All" };
+        string[] resultArray = process_module(inputArray, moduleName);
+
+        HoleSelectionUI holeDlg = new HoleSelectionUI();
+        bool found = false;
+        foreach (string s in resultArray)
+        {
+            if (s == moduleName)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            HoleSelectionUI.theUI.NXMessageBox.Show("License Error", NXMessageBox.DialogType.Error, "Invalid License");
+            return retValue;
+        }
         try
         {
             //partDlg = new PartSelection();
@@ -174,8 +223,10 @@ public class HoleSelectionUI
             //    return;
 
 
-            holeDlg = new HoleSelectionUI();
+            //holeDlg = new HoleSelectionUI();
             holeDlg.Launch();
+
+            
         }
         catch (Exception ex)
         {
@@ -190,6 +241,9 @@ public class HoleSelectionUI
             if (holeDlg != null)
                 holeDlg.Dispose();
         }
+
+        return 0;
+
     }
 
     //------------------------------------------------------------------------------
